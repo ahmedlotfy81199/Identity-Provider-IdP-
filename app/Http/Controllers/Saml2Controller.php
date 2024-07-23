@@ -94,11 +94,10 @@ class Saml2Controller extends Controller
         $samlSettings = $this->saml2Auth->getSettings();
         $requestId = $this->saml2Auth->getLastRequestId();
         $issuer = $samlSettings->getIdPData()['entityId'];
-        $spEntityId = $samlSettings->getSPData()['entityId']; // Get SP entity ID
         $acsUrl = $samlSettings->getSPData()['assertionConsumerService']['url'];
 
         // Create the assertion
-        $assertion = new \DOMDocument();
+        $assertion = new \DOMDocument('1.0', 'utf-8');
         $assertion->loadXML('<Assertion xmlns="urn:oasis:names:tc:SAML:2.0:assertion"></Assertion>');
 
         // Create the Subject
@@ -124,9 +123,9 @@ class Saml2Controller extends Controller
         $conditions = $assertion->createElement('Conditions');
         $conditions->setAttribute('NotBefore', gmdate('Y-m-d\TH:i:s\Z', time() - 300));
         $conditions->setAttribute('NotOnOrAfter', gmdate('Y-m-d\TH:i:s\Z', time() + 3600));
-       
+
         $audienceRestriction = $assertion->createElement('AudienceRestriction');
-        $audience = $assertion->createElement('Audience', $spEntityId); // Set audience to SP entity ID
+        $audience = $assertion->createElement('Audience', $samlSettings->getSPData()['entityId']);
         $audienceRestriction->appendChild($audience);
 
         $conditions->appendChild($audienceRestriction);
@@ -160,7 +159,7 @@ class Saml2Controller extends Controller
         $assertion->documentElement->appendChild($attributeStatement);
 
         // Create the Response
-        $response = new \DOMDocument();
+        $response = new \DOMDocument('1.0', 'utf-8');
         $response->loadXML('<Response xmlns="urn:oasis:names:tc:SAML:2.0:protocol"></Response>');
 
         $response->documentElement->setAttribute('ID', '_' . \OneLogin\Saml2\Utils::generateUniqueID());
